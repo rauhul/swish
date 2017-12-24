@@ -18,5 +18,8 @@ let package = Package(
         .target(
             name: "SwishCore",
             dependencies: []),
+        .target(
+            name: "ArgumentParser",
+            dependencies: []),
     ]
 )
