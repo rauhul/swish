@@ -1,5 +1,5 @@
-class Core {
-    init() { }
+public final class Core {
+    public init() { }
 
-    func run() throws { }
+    public func run() throws { }
 }

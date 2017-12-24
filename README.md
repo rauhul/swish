@@ -1,7 +1,7 @@
-# swish
+# Swish
 swift shell
 
-## building swish
+## building Swish
 
 ### debug
 `swift build`
@@ -9,7 +9,7 @@ swift shell
 ### release
 `swift build -c release -Xswiftc -static-stdlib`
 
-## running swish
+## running Swish
 
 ### debug
-`.build/debug/swish`
+`.build/debug/Swish`
