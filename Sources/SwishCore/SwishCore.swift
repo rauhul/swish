@@ -5,9 +5,11 @@ import Foundation
 #if os(Linux)
     // https://developer.apple.com/documentation/foundation/nstask
     typealias Task = Foundation.Task
+    import Glibc
 #else
     // https://developer.apple.com/documentation/foundation/process
     typealias Task = Foundation.Process
+    import Darwin.C
 #endif
 
 public final class Core {
@@ -43,38 +45,14 @@ public final class Core {
 
             guard tokens.count > 0 else { continue }
 
-            // https://developer.apple.com/documentation/foundation/pipe
-            // let inputPipe  = Pipe()
             let outputPipe = Pipe()
-            // let errorPipe  = Pipe()
-            outputPipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
-            fileHandleDataAvailableObserver = NotificationCenter.default.addObserver(forName: .NSFileHandleDataAvailable, object: outputPipe.fileHandleForReading, queue: nil) {
-                notification in
 
-                let output = outputPipe.fileHandleForReading.availableData
-                let outputString = String(data: output, encoding: String.Encoding.utf8) ?? ""
-                print("<hello>", outputString)
-                outputPipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
-            }
+            // MARK: - New Stuff
+            var pid: pid_t = 0
 
-            let task = Task()
-            task.launchPath = "/bin/bash"
-            tokens.insert("-c", at: 0)
-            task.arguments = tokens
-            // task.standardInput  = FileHandle.standardInput
-            task.standardOutput = outputPipe
-            // task.standardError  = FileHandle.standardError
-            //
+            let argv: [UnsafeMutablePointer<CChar>?] = tokens.map{ $0.withCString(strdup)}
 
-
-            // https://developer.apple.com/documentation/foundation/processinfo
-            // task.environment = ProcessInfo.processInfo.environment
-            task.launch()
-            print("before exit")
-            task.waitUntilExit()
-            print("after exit")
-
-            print(task.environment ?? "no env", task.processIdentifier)
+            posix_spawnp(&pid, argv[0], nil, nil, argv + [nil], nil)
 
         } while(!shouldExit)
     }
