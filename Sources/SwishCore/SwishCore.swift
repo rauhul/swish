@@ -30,7 +30,6 @@ public final class Core {
         }
     }
 
-    //
     public func run() throws {
         var shouldExit = false
         repeat {
@@ -41,18 +40,25 @@ public final class Core {
             }
 
             let separators = CharacterSet(charactersIn: " \t\r\n")
-            var tokens = line.components(separatedBy: separators).filter { !$0.isEmpty }
+            let tokens = line.components(separatedBy: separators).filter { !$0.isEmpty }
 
             guard tokens.count > 0 else { continue }
 
-            let outputPipe = Pipe()
 
             // MARK: - New Stuff
             var pid: pid_t = 0
 
             let argv: [UnsafeMutablePointer<CChar>?] = tokens.map{ $0.withCString(strdup)}
-
-            posix_spawnp(&pid, argv[0], nil, nil, argv + [nil], nil)
+            var status:Int32 = posix_spawnp(&pid, argv[0], nil, nil, argv + [nil], nil)
+            print(pid)
+            if pid < 0 {
+                print ("Error spawning")
+                return;
+            } else {
+                if waitpid(pid, &status, 0) != -1 {
+                    print("clean exit")
+                }
+            }
 
         } while(!shouldExit)
     }
