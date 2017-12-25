@@ -18,7 +18,7 @@ internal class Command {
 
     internal enum CommandError: Error {
         case invalidState
-        case invalidStateTransition(from: CommandState, to: CommandState)
+        // case invalidStateTransition(from: CommandState, to: CommandState)
     }
 
     internal enum CommandState: Equatable {
@@ -26,81 +26,62 @@ internal class Command {
         case ready
         case running
         case cancelled
-        case exited(code: Int32)
-        case failed(reason: Error)
-
-        internal static func ==(lhs: CommandState, rhs: CommandState) -> Bool {
-            switch (lhs, rhs) {
-            case (.setup, .setup):
-                return true
-
-            case (.ready, .ready):
-                return true
-
-            case (.running, .running):
-                return true
-
-            case (.cancelled, .cancelled):
-                return true
-
-            case (let .exited(lhsCode), let .exited(rhsCode)):
-                return lhsCode == rhsCode
-
-            case (let .failed(_), let .failed(_)):
-                return false
-
-            default:
-                return false
-            }
-        }
+        case exited
+        case failed
     }
 
     // MARK: Command Parser
-    private static lazy var swishCommands: [String: SwishCommand] = {
-        let swishCommands = [String: SwishCommand]()
-        swishCommands["cd"] = SwishCommandChangeDirectory.launch() // pointer to constructor
+    private static var swishCommands: [String: SwishCommand.Type] = {
+        var swishCommands = [String: SwishCommand.Type]()
+        swishCommands["cd"] = SwishCommandChangeDirectory.self
         return swishCommands
     }()
 
-    internal static func commandFor(_ command: String, with arguments: [CommandArgument], in core: SwishCore) -> Launchable {
-        // if let swishCommandConstructor = swishCommands[command] {
-        //     return swishCommandConstructor(with: arguments, in: core)
-        // }
+    internal static func named(_ command: String, with arguments: [CommandArgument], in core: SwishCore) -> Launchable {
+        if let SwishCommandType = swishCommands[command] {
+            return SwishCommandType.init(with: arguments, in: core)
+        }
         return ExternalCommand(command, with: arguments)
     }
 
     // MARK: Properties
+    internal var exitCode: Int32 = -1
     internal var state: CommandState = .setup
-    internal var arguments = [CommandArgument]()
+    internal var arguments: [CommandArgument]
 
     // internal updateState() throws {
     //
     // }
 
+    // MARK: Object lifecycle
+    internal init(with arguments: [CommandArgument]) {
+        self.arguments = arguments
+    }
+
+
     // MARK: Default launch implementation
     internal func launch() throws {
         guard state == Command.CommandState.ready else {
             throw CommandError.invalidState
-            return
         }
         state = .running
     }
 }
 
-internal class SwishCommand: Command {
+internal class SwishCommand: Command, Launchable {
 
     internal enum SwishCommandError: Error { }
 
     internal weak var core: SwishCore?
 
-    internal init(with arguments: [CommandArgument], in core: SwishCore) {
-        self.arguments = arguments
+    internal required init(with arguments: [CommandArgument], in core: SwishCore) {
         self.core = core
+        super.init(with: arguments)
         state = .ready
     }
 }
 
-internal final class SwishCommandChangeDirectory: SwishCommand, Launchable {
+internal final class SwishCommandChangeDirectory: SwishCommand {
 
     internal enum SwishCommandChangeDirectoryError: Error { }
 
@@ -140,8 +121,8 @@ internal final class ExternalCommand: Command, Launchable {
     // MARK: Object lifecycle
     internal init (_ command: String, with arguments: [String]) {
         self.command = command
-        self.arguments = arguments
-        //lookupCommand
+        super.init(with: arguments)
+        lookupCommand()
     }
 
     deinit {
@@ -149,13 +130,13 @@ internal final class ExternalCommand: Command, Launchable {
         argv = nil
     }
 
-    // private func lookupCommand() throws {
-    //     if commandExists {
-    //         state = ready
-    //     } else {
-    //         state = failed(reason: ExternalCommandError.commandNotFound)
-    //     }
-    // }
+    private func lookupCommand() {
+        // if commandExists {
+        state = .ready
+        // } else {
+        //     state = failed(reason: ExternalCommandError.commandNotFound)
+        // }
+    }
 
     // MARK: Launchable
     internal override func launch() throws {
@@ -172,14 +153,14 @@ internal final class ExternalCommand: Command, Launchable {
         // Essentially fork wait
         if pid < 0 {
             print ("Error spawning")
+            state = .failed
             throw ExternalCommandError.processSpawnFailure
-            state = .failed(reason: ExternalCommandError.processSpawnFailure)
         } else {
-            let exitCode = waitpid(pid, &status, 0)
+            state = .exited
+            exitCode = waitpid(pid, &status, 0)
             if exitCode == -1 {
                 print("Exited with error")
             }
-            state = .exited(code: exitCode)
         }
     }
 

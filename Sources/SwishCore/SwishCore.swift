@@ -26,6 +26,12 @@ public final class SwishCore {
             guard tokens.count > 0 else { continue }
 
             // FIXME: get command from CommandParser
+            let command = Command.named(tokens[0], with: Array(tokens[1...]), in: self)
+            do {
+                try command.launch()
+            } catch let error {
+                print(error)
+            }
 
         } while !shouldExit
     }
