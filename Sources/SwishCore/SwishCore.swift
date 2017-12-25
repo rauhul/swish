@@ -33,7 +33,7 @@ public final class Core {
             guard tokens.count > 0 else { continue }
 
             if builtins[tokens[0]] != nil {
-                (builtins[tokens[0]])!(Array(tokens[1...]))
+                let _ = (builtins[tokens[0]])!(Array(tokens[1...]))
             } else {
                 var pid: pid_t = 0
 
