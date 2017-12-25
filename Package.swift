@@ -21,5 +21,10 @@ let package = Package(
         .target(
             name: "ArgumentParser",
             dependencies: []),
+
+        .testTarget(
+            name: "SwishCoreTests",
+            dependencies: ["SwishCore"]),
+
     ]
 )

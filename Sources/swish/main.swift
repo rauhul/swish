@@ -1,6 +1,6 @@
-print("Hello, Swish!")
-
 import SwishCore
+
+print("Hello, Swish!")
 
 let core = Core()
 

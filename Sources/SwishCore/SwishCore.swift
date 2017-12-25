@@ -13,6 +13,8 @@ import Foundation
 #endif
 
 public final class Core {
+    let description = "Swish Core"
+
     public init() { }
 
     public func run() throws {
