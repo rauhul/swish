@@ -6,27 +6,35 @@ public final class SwishCore {
 
     public enum SwishCoreError: Error { }
 
+    // MARK: Properties
+    // Public
     public let description = "Swish Core"
 
+    // Internal
+    internal var shouldExit = false
+
+    // Private
+    private let consoleIO = ConsoleIO()
+
+    // MARK: Object lifecycle
     public init() { }
 
-    public func run() throws {
-        var shouldExit = false
-        repeat {
-            print("$> ", terminator: "")
+    deinit { }
 
-            // https://developer.apple.com/documentation/swift/1641199-readline
-            guard let line = readLine(strippingNewline: true) else {
-                shouldExit = true
+    // MARK: Shell run loop
+    public func run() throws {
+        repeat {
+
+            consoleIO.printPrompt()
+
+            // Check for pipes
+            // If pipe, then split by pipe and execute each one one after another
+            guard let (commandString, arguments) = consoleIO.readCommand() else {
                 continue
             }
 
-            let separators = CharacterSet(charactersIn: " \t\r\n")
-            let tokens = line.components(separatedBy: separators).filter { !$0.isEmpty }
-            guard tokens.count > 0 else { continue }
+            let command = Command.named(commandString, with: arguments, in: self)
 
-            // FIXME: get command from CommandParser
-            let command = Command.named(tokens[0], with: Array(tokens[1...]), in: self)
             do {
                 try command.launch()
             } catch let error {
@@ -36,3 +44,5 @@ public final class SwishCore {
         } while !shouldExit
     }
 }
+
+// watch -n 1 sudo dmesg &

@@ -34,6 +34,7 @@ internal class Command {
     private static var swishCommands: [String: SwishCommand.Type] = {
         var swishCommands = [String: SwishCommand.Type]()
         swishCommands["cd"] = SwishCommandChangeDirectory.self
+        swishCommands["exit"] = SwishCommandExit.self
         return swishCommands
     }()
 
@@ -45,6 +46,7 @@ internal class Command {
     }
 
     // MARK: Properties
+    // FIXME: change exitcode to Optional<Int32>
     internal var exitCode: Int32 = -1
     internal var state: CommandState = .setup
     internal var arguments: [CommandArgument]
@@ -57,7 +59,6 @@ internal class Command {
     internal init(with arguments: [CommandArgument]) {
         self.arguments = arguments
     }
-
 
     // MARK: Default launch implementation
     internal func launch() throws {
@@ -87,9 +88,22 @@ internal final class SwishCommandChangeDirectory: SwishCommand {
 
     internal override func launch() throws {
         try super.launch()
-        guard let core = core else { fatalError("Core must exist for all SwishCommands") }
-        print(core.description)
-        // do stuff
+        guard let _ = core else { fatalError("Core must exist for all SwishCommands") }
+        // TODO: ERROR CHECKING
+
+        chdir(self.arguments[0])
+    }
+}
+
+internal final class SwishCommandExit: SwishCommand {
+
+    internal enum SwishCommandExitError: Error { }
+
+    internal override func launch() throws {
+        try super.launch()
+        guard let _ = core else { fatalError("Core must exist for all SwishCommands") }
+        // TODO: Change the state on swish core
+        core!.shouldExit = true
     }
 }
 
@@ -101,7 +115,7 @@ internal final class ExternalCommand: Command, Launchable {
     }
 
     // MARK: Manually managed memory
-    var argv: [UnsafeMutablePointer<CChar>?]? {
+    private var argv: [UnsafeMutablePointer<CChar>?]? {
         willSet {
             //clean up
             if let argv = argv {
@@ -116,7 +130,7 @@ internal final class ExternalCommand: Command, Launchable {
 
     // MARK: Properties
     internal var command: String
-    var pid: pid_t = -1
+    private var pid: pid_t = -1
 
     // MARK: Object lifecycle
     internal init (_ command: String, with arguments: [String]) {
