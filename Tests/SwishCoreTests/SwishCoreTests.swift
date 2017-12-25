@@ -6,7 +6,7 @@ class SwishCoreTests: XCTestCase {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
-        XCTAssertEqual(Core().description, "Swish Core")
+        XCTAssertEqual(SwishCore().description, "Swish Core")
     }
 
     static var allTests = [
