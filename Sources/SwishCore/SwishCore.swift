@@ -13,6 +13,8 @@ import Foundation
 #endif
 
 public final class Core {
+    public init() { }
+
     public func run() throws {
         var shouldExit = false
         repeat {
@@ -34,7 +36,7 @@ public final class Core {
             let argv: [UnsafeMutablePointer<CChar>?] = tokens.map{ $0.withCString(strdup)}
             var status:Int32 = posix_spawnp(&pid, argv[0], nil, nil, argv + [nil], nil)
 
-            // Essentially fork wait 
+            // Essentially fork wait
             if pid < 0 {
                 print ("Error spawning")
                 return;
