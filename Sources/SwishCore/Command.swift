@@ -103,11 +103,24 @@ internal final class SwishCommandExit: SwishCommand {
 
     internal override func launch() throws {
         try super.launch()
-        guard let _ = core else { fatalError("Core must exist for all SwishCommands") }
+        guard let core = core else { fatalError("Core must exist for all SwishCommands") }
         // TODO: Change the state on swish core
-        core!.shouldExit = true
+        core.shouldExit = true
     }
 }
+
+internal final class SwishCommandEcho: SwishCommand {
+
+    internal enum SwishCommandEchoError: Error { }
+
+    internal override func launch() throws {
+        try super.launch()
+        guard let _ = core else { fatalError("Core must exist for all SwishCommands") }
+
+        print(arguments.joined(separator: " "))
+    }
+}
+
 
 internal final class ExternalCommand: Command, Launchable {
 
