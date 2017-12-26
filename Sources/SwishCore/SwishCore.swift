@@ -12,6 +12,7 @@ public final class SwishCore {
 
     // Internal
     internal var shouldExit = false
+    internal var history    = [Command]()
 
     // Private
     private let consoleIO = ConsoleIO()
@@ -33,6 +34,13 @@ public final class SwishCore {
             }
 
             let command = Command.named(commandString, with: arguments, in: self)
+            history.append(command)
+
+            if history.count >= 250 {
+                // Complexity: O(n), where n is the length of the collection.
+                // should use a fixed size ring buffer
+                history.removeFirst()
+            }
 
             do {
                 try command.launch()
