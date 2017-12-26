@@ -26,10 +26,9 @@ public final class SwishCore {
         repeat {
 
             consoleIO.printPrompt()
-
             // Check for pipes
             // If pipe, then split by pipe and execute each one one after another
-            guard let (commandString, arguments) = consoleIO.readCommand() else {
+            guard let (commandString, arguments) = consoleIO.readCommandIn(self) else {
                 continue
             }
 
@@ -43,6 +42,8 @@ public final class SwishCore {
 
         } while !shouldExit
     }
-}
 
-// watch -n 1 sudo dmesg &
+    public func handleSIGINT() {
+        // print("SIGINT")
+    }
+}

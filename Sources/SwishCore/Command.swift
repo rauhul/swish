@@ -6,6 +6,8 @@
     import Darwin.C
 #endif
 
+import Foundation
+
 internal typealias CommandArgument = String
 
 internal protocol Launchable {
@@ -33,7 +35,7 @@ internal class Command {
     // MARK: Command Parser
     private static var swishCommands: [String: SwishCommand.Type] = {
         var swishCommands = [String: SwishCommand.Type]()
-        swishCommands["cd"] = SwishCommandChangeDirectory.self
+        swishCommands["cd"]   = SwishCommandChangeDirectory.self
         swishCommands["exit"] = SwishCommandExit.self
         return swishCommands
     }()
@@ -118,11 +120,20 @@ internal final class ExternalCommand: Command, Launchable {
     private var argv: [UnsafeMutablePointer<CChar>?]? {
         willSet {
             //clean up
-            if let argv = argv {
-                argv.forEach {
-                    if let pointer = $0 {
-                        free(pointer)
-                    }
+            argv?.forEach {
+                if let pointer = $0 {
+                    free(pointer)
+                }
+            }
+        }
+    }
+
+    private var envp: [UnsafeMutablePointer<CChar>?]? {
+        willSet {
+            //clean up
+            envp?.forEach {
+                if let pointer = $0 {
+                    free(pointer)
                 }
             }
         }
@@ -137,11 +148,13 @@ internal final class ExternalCommand: Command, Launchable {
         self.command = command
         super.init(with: arguments)
         lookupCommand()
+        envp = ProcessInfo.processInfo.environment.map { "\($0.0)=\($0.1)".withCString(strdup) }
     }
 
     deinit {
         // clean up manually managed memory
         argv = nil
+        envp = nil
     }
 
     private func lookupCommand() {
@@ -162,7 +175,7 @@ internal final class ExternalCommand: Command, Launchable {
         guard let argv = argv else {
             fatalError("argv must not be nil")
         }
-        var status = posix_spawnp(&pid, argv[0], nil, nil, argv + [nil], nil)
+        var status = posix_spawnp(&pid, argv[0], nil, nil, argv + [nil], (envp ?? []) + [nil])
 
         // Essentially fork wait
         if pid < 0 {
