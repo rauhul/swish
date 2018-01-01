@@ -261,10 +261,12 @@ internal final class ConsoleIO {
         var step = step
         var startIdx: Int
         var endIdx: Int
+        var f = false
 
         if let s = Int(start), let e = Int(end) {
             startIdx = s
             endIdx = e
+            f = true
         } else {
             startIdx = Int(start.unicodeScalars.map { $0.value }.reduce(0, +))
             endIdx = Int(end.unicodeScalars.map { $0.value }.reduce(0, +))
