@@ -29,7 +29,7 @@ public final class SwishCore {
             consoleIO.printPrompt()
             // Check for pipes
             // If pipe, then split by pipe and execute each one one after another
-            guard let (commandString, arguments) = consoleIO.readCommandIn(self) else {
+            guard let (commandString, arguments) = consoleIO.readCommand(in: self) else {
                 continue
             }
 

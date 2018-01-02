@@ -81,7 +81,15 @@ internal final class SwishCommandEcho: SwishCommand {
         try super.launch()
         guard let _ = core else { fatalError("Core must exist for all SwishCommands") }
 
-        print(arguments.joined(separator: " "))
+        var nflag = 0
+        // Echo may not do getopt(3) command parsing
+        if arguments.first == "-n" {
+            nflag = 1
+            arguments.removeFirst(1)
+        }
+
+        print(arguments.joined(separator: " "), terminator: nflag != 0 ? "" : "\n")
+
         update(state: .exited, exitCode: 0)
     }
 
