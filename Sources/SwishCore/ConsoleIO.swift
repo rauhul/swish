@@ -127,7 +127,6 @@ internal final class ConsoleIO {
             return nil
         }
 
-
         let separators = CharacterSet(charactersIn: " \t\r\n")
         let tokens = line.components(separatedBy: separators).filter { !$0.isEmpty }
         guard tokens.count > 0 else { return nil }
@@ -140,9 +139,9 @@ internal final class ConsoleIO {
     private func expand(line: String) -> [String] {
         // 1. Brace Expansion
         var retVal : [String]
-        let wrappedLine = "{" + line.replacingOccurrences(of: " ", with: ",") + "}"
-        retVal = braceExpand(line: wrappedLine)
+        retVal = braceExpand(line: "{" + line.replacingOccurrences(of: " ", with: ",") + "}")
         // 2. Tilde Expansion
+        retVal = tildeExpand(splitLine: retVal)
         // 3. Shell parameter and variable Expansion
         // 4. Command substitution
         // 5. Arithmetic Expansion
@@ -152,9 +151,33 @@ internal final class ConsoleIO {
         return retVal
     }
 
+    private func tildeExpand(splitLine: [String]) -> [String] {
+        var retVal : [String] = []
+        for line in splitLine {
+            var str : String = line
+            let firstChar = line.prefix(1)
+            if firstChar == "~" {
+                if line.count > 1 {
+                    let secondChar = String(line.prefix(2).suffix(1))
+                    if secondChar == "+" {
+                        print("ERROR: NOT IMPLEMENTED")
+                    } else if secondChar == "-" {
+                        print("ERROR: NOT IMPLEMENTED")
+                    } else {
+                        str = NSString(string: line).expandingTildeInPath
+                    }
+                } else {
+                    str = NSString(string: line).expandingTildeInPath
+                }
+            }
+            retVal.append(str)
+        }
+        return retVal
+    }
+
     private func braceExpand(line: String) -> [String] {
         // Wrap entire thing in braces, replace spaces with commas
-        var wrappedLine = line
+        let wrappedLine = line
         // The number of brackets and iterator marks
         let numBrackets = wrappedLine.components(separatedBy: "{").count - 1
         let numIterator = wrappedLine.components(separatedBy: "..")
