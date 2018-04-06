@@ -122,7 +122,7 @@ internal final class ConsoleIO {
     // MARK:
     internal func readCommand(in core: SwishCore) -> (command: String, arguments: [CommandArgument])? {
         // https://developer.apple.com/documentation/swift/1641199-readline
-        guard var line = readLine(strippingNewline: true) else {
+        guard let line = readLine(strippingNewline: true) else {
             core.shouldExit = true
             return nil
         }
@@ -131,9 +131,107 @@ internal final class ConsoleIO {
         let tokens = line.components(separatedBy: separators).filter { !$0.isEmpty }
         guard tokens.count > 0 else { return nil }
 
-        let expanded = expand(line: tokens[1...].joined(separator: " "))
+        let args = parseLine(line: tokens[1...].joined(separator: " "))
+        print(args)
+        //let expanded = expand(line: tokens[1...].joined(separator: " "))
 
-        return (command: tokens[0], arguments: Array(expanded))
+        return (command: tokens[0], arguments: Array(args))
+    }
+
+    private func parseLine(line: String) -> [String] {
+        // 1. Read Data to execute -- Done already
+        // 2. Process quotes
+        return processQuotes(line: line).filter{$0 != ""}
+        // 3. Split read data into commands
+        // 4. Parse Special operators
+        // 5. Perform Expansions
+        // 6. Split command into name and args
+        // 7. Run command
+    }
+
+    private func processQuotes(line: String) -> [String] {
+        return splitQuotes(line: line)
+    }
+
+    private func splitQuotes(line: String) -> [String] {
+        var stringArr : [String] = []
+        stringArr.append("")
+        // 0 is not in quotes
+        // 1 is in double quotes
+        // 2 is in single quotes
+        var inQuotes = 0
+        var idx = 0
+        var seenQuotes = false
+        var insertedPlain = false
+        for char in line {
+            if char == "\"" || char == "'"{
+                seenQuotes = true
+                if inQuotes == 0 {
+                    // We are about to go to quotes, process
+                    stringArr[idx] = expand(line: stringArr[idx]).joined(separator: " ")
+                    let sVals = stringArr[idx].components(separatedBy: " ").filter{!$0.isEmpty}
+                    print(sVals)
+                    var tIdx = idx
+                    for val in sVals.reversed() {
+                        stringArr.insert(val, at: idx)
+                        tIdx = tIdx + 1
+                    }
+                    idx = (idx + (tIdx - idx) - 1)
+                    stringArr.remove(at: tIdx)
+                }
+                idx = idx + 1
+                stringArr.append("")
+                if char == "'" {
+                    if inQuotes == 2 {
+                        // Going back to normal text, so process it as single quoted
+                        insertedPlain = false
+                        inQuotes = 0
+                    } else if inQuotes == 1 {
+                        // Do nothing, quotes within quotes
+                    } else {
+                        inQuotes = 2
+                    }
+                } else {
+                    if inQuotes == 1 {
+                        // Going back to normal text, so process it as double quoted
+                        insertedPlain = false
+                        inQuotes = 0
+                    } else if inQuotes == 2 {
+                        // Do nothing, quotes within quotes
+                    } else {
+                        inQuotes = 1
+                    }
+
+                }
+            } else {
+                insertedPlain = true
+                stringArr[idx].append(char)
+            }
+        }
+
+        if !seenQuotes {
+            // We never saw quotes, so just expand the whole string
+            stringArr[idx] = expand(line: stringArr[idx]).joined(separator: " ")
+            let sVals = stringArr[idx].components(separatedBy: " ").filter{!$0.isEmpty}
+            var tIdx = idx
+            for val in sVals.reversed() {
+                stringArr.insert(val, at: idx)
+                tIdx = tIdx + 1
+            }
+            stringArr.remove(at: tIdx)
+            print(stringArr)
+        } else {
+            if insertedPlain {
+                let sVals = stringArr[idx].components(separatedBy: " ").filter{!$0.isEmpty}
+                var tIdx = idx
+                for val in sVals.reversed() {
+                    stringArr.insert(val, at: idx)
+                    tIdx = tIdx + 1
+                }
+                stringArr.remove(at: tIdx)
+            }
+        }
+        return stringArr
     }
 
     private func expand(line: String) -> [String] {
