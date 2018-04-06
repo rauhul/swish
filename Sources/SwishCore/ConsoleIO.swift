@@ -132,7 +132,6 @@ internal final class ConsoleIO {
         guard tokens.count > 0 else { return nil }
 
         let args = parseLine(line: tokens[1...].joined(separator: " "))
-        print(args)
         //let expanded = expand(line: tokens[1...].joined(separator: " "))
 
         return (command: tokens[0], arguments: Array(args))
@@ -170,7 +169,6 @@ internal final class ConsoleIO {
                     // We are about to go to quotes, process
                     stringArr[idx] = expand(line: stringArr[idx]).joined(separator: " ")
                     let sVals = stringArr[idx].components(separatedBy: " ").filter{!$0.isEmpty}
-                    print(sVals)
                     var tIdx = idx
                     for val in sVals.reversed() {
                         stringArr.insert(val, at: idx)
@@ -219,7 +217,6 @@ internal final class ConsoleIO {
                 tIdx = tIdx + 1
             }
             stringArr.remove(at: tIdx)
-            print(stringArr)
         } else {
             if insertedPlain {
                 let sVals = stringArr[idx].components(separatedBy: " ").filter{!$0.isEmpty}
